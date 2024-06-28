@@ -13,5 +13,5 @@ return {
   { import = "astrocommunity.utility.noice-nvim" },
   { import = "astrocommunity.completion.copilot-lua-cmp" },
   { import = "astrocommunity.motion.mini-move" },
-  { import = "astrocommunity.editing-support.chatgpt-nvim" },
+  { import = "astrocommunity.project.nvim-spectre" },
 }
