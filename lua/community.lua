@@ -10,8 +10,10 @@ return {
   { import = "astrocommunity.pack.docker" },
   { import = "astrocommunity.pack.python" },
   { import = "astrocommunity.pack.rust" },
+  -- { import = "astrocommunity.pack.godot" },
   { import = "astrocommunity.utility.noice-nvim" },
   { import = "astrocommunity.completion.copilot-lua-cmp" },
   { import = "astrocommunity.motion.mini-move" },
   { import = "astrocommunity.project.nvim-spectre" },
+  { import = "astrocommunity.recipes.neovide" },
 }

@@ -39,15 +39,20 @@ return {
             desc = "Prompt actions",
           }
 
-          -- Function to get the visible lines in the window
-          local function get_visible_lines()
+          local function inline_window()
+            local current_line = vim.api.nvim_win_get_cursor(0)[1]
+            -- Get the visible lines in the window
             local first_visible_line = vim.fn.line "w0"
             local last_visible_line = vim.fn.line "w$"
-            return first_visible_line, last_visible_line
-          end
-
-          -- Function to get the selected range
-          local function get_selected_range(first_visible_line)
+            -- Get the relative line of the cursor
+            local relative_cursor_line = current_line - first_visible_line + 1
+            -- Get the total height of the window and the height for the inline window
+            local relative_height = vim.api.nvim_win_get_height(0)
+            local inline_window_height = math.ceil(relative_height * 0.3) + 1
+            -- Get the midpoint of the visible lines
+            local window_height = last_visible_line - first_visible_line + 1
+            local midpoint = first_visible_line + ((window_height + inline_window_height) / 2) - 1
+            -- Get visually selected range if available (relative to window)
             local selected_start, selected_end
             if vim.fn.mode() == "v" or vim.fn.mode() == "V" or vim.fn.mode() == "\22" then
               selected_start = vim.fn.line "v" - first_visible_line + 1
@@ -55,20 +60,13 @@ return {
               if selected_start > selected_end then
                 selected_start, selected_end = selected_end, selected_start
               end
+            else
+              selected_start = nil
+              selected_end = nil
             end
-            return selected_start, selected_end
-          end
-
-          local function inline_window()
-            local current_line = vim.api.nvim_win_get_cursor(0)[1]
-            local first_visible_line, last_visible_line = get_visible_lines()
-            local relative_cursor_line = current_line - first_visible_line + 1
-            local relative_height = vim.api.nvim_win_get_height(0)
-            local inline_window_height = math.ceil(relative_height * 0.3) + 1
-            local window_height = last_visible_line - first_visible_line + 1
-            local midpoint = first_visible_line + ((window_height + inline_window_height) / 2) - 1
-            local selected_start, selected_end = get_selected_range(first_visible_line)
+            -- Determine if there is a visual selection
             local has_visual_selection = (selected_start and selected_end and selected_start ~= selected_end)
+            -- Initialize window options
             local window_options = {
               layout = "float",
               relative = "cursor",
@@ -77,15 +75,26 @@ return {
               row = 1,
               border = "rounded",
             }
+            -- Adjust window position to avoid covering the visual selection
             if has_visual_selection then
               if selected_end + inline_window_height <= relative_height then
-                window_options.row = selected_end == relative_cursor_line and 1 or selected_end - selected_start + 1
+                if selected_end == relative_cursor_line then
+                  window_options.row = 1
+                else
+                  window_options.row = selected_end - selected_start + 1
+                end
               elseif selected_start - inline_window_height >= 1 then
-                window_options.row = selected_end == relative_cursor_line
-                    and -inline_window_height + selected_start - selected_end + -1
-                  or -inline_window_height + -1
+                if selected_end == relative_cursor_line then
+                  window_options.row = -inline_window_height + selected_start - selected_end + -1
+                else
+                  window_options.row = -inline_window_height + -1
+                end
+              else
+                -- Default positioning if visual selection is too close to the top or bottom
+                window_options = {}
               end
             else
+              -- Normal positioning if no visual selection
               if current_line > midpoint then window_options.row = -inline_window_height + -1 end
             end
             return window_options
